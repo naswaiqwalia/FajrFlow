@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FajrFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Lora:wght@300;400&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lora', serif;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            position: relative;
+            overflow-x: hidden;
+        }
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .mood-rainy { background: linear-gradient(135deg, #6b7280, #d1d5db); }
+        .mood-sunny { background: linear-gradient(135deg, #fef3c7, #fed7aa); }
+        .mood-night { background: linear-gradient(135deg, #3b82f6, #1e3a8a); }
+        .mood-spring { background: linear-gradient(135deg, #fce7f3, #f9a8d4); }
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        header h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 3em;
+            margin: 0;
+            font-weight: 400;
+        }
+        .tagline {
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+        .mood-rainy header h1, .mood-rainy .tagline, .mood-spring header h1, .mood-spring .tagline { color: #1f2937; }
+        .mood-sunny header h1, .mood-sunny .tagline { color: #7c2d12; }
+        .mood-night header h1, .mood-night .tagline { color: #e5e7eb; }
+        main {
+            display: grid;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 400;
+        }
+        .mood-rainy h2, .mood-spring h2 { color: #1f2937; }
+        .mood-sunny h2 { color: #7c2d12; }
+        .mood-night h2 { color: #e5e7eb; }
+        .timer-section { text-align: center; }
+        .timer-modes { display: flex; gap: 10px; justify-content: center; }
+        .mode-btn {
+            padding: 10px 20px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: 400;
+        }
+        .mode-btn.active { filter: brightness(1.2); }
+        .mood-rainy .mode-btn { background: #9ca3af; }
+        .mood-rainy .mode-btn.active { background: #60a5fa; }
+        .mood-sunny .mode-btn { background: #f59e0b; }
+        .mood-sunny .mode-btn.active { background: #facc15; }
+        .mood-night .mode-btn { background: #2563eb; }
+        .mood-night .mode-btn.active { background: #60a5fa; }
+        .mood-spring .mode-btn { background: #f9a8d4; }
+        .mood-spring .mode-btn.active { background: #fbcfe8; }
+        .custom-input { margin: 10px 0; }
+        .custom-input input {
+            padding: 8px;
+            margin: 0 5px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy .custom-input input, .mood-spring .custom-input input { color: #1f2937; }
+        .mood-sunny .custom-input input { color: #7c2d12; }
+        .mood-night .custom-input input { color: #e5e7eb; }
+        .hidden { display: none; }
+        .timer-display {
+            font-size: 3em;
+            margin: 20px 0;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+        }
+        .mood-rainy .timer-display, .mood-spring .timer-display { color: #1f2937; }
+        .mood-sunny .timer-display { color: #7c2d12; }
+        .mood-night .timer-display { color: #e5e7eb; }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress {
+            width: 0;
+            height: 100%;
+            transition: width 1s linear;
+        }
+        .mood-rainy .progress { background: #60a5fa; }
+        .mood-sunny .progress { background: #facc15; }
+        .mood-night .progress { background: #60a5fa; }
+        .mood-spring .progress { background: #fbcfe8; }
+        .timer-controls button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+            font-weight: 400;
+        }
+        .mood-rainy .timer-controls button { background: #9ca3af; }
+        .mood-sunny .timer-controls button { background: #f59e0b; }
+        .mood-night .timer-controls button { background: #2563eb; }
+        .mood-spring .timer-controls button { background: #f9a8d4; }
+        .prayer-suggestion {
+            margin-top: 10px;
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.5em;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        .prayer-suggestion.show {
+            opacity: 1;
+        }
+        .mood-rainy .prayer-suggestion, .mood-spring .prayer-suggestion { color: #1f2937; }
+        .mood-sunny .prayer-suggestion { color: #7c2d12; }
+        .mood-night .prayer-suggestion { color: #e5e7eb; }
+        .todo-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .todo-input input, .todo-input select {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: 'Lora', serif;
+            min-width: 120px;
+        }
+        .mood-rainy .todo-input input, .mood-rainy .todo-input select, .mood-spring .todo-input input, .mood-spring .todo-input select { color: #1f2937; }
+        .mood-sunny .todo-input input, .mood-sunny .todo-input select { color: #7c2d12; }
+        .mood-night .todo-input input, .mood-night .todo-input select { color: #e5e7eb; }
+        .todo-input button {
+            padding: 10px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy .todo-input button { background: #60a5fa; }
+        .mood-sunny .todo-input button { background: #facc15; }
+        .mood-night .todo-input button { background: #60a5fa; }
+        .mood-spring .todo-input button { background: #fbcfe8; }
+        #todo-list { list-style: none; padding: 0; }
+        #todo-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        #todo-list li.deadline-near {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        .mood-rainy #todo-list li, .mood-spring #todo-list li { color: #1f2937; }
+        .mood-sunny #todo-list li { color: #7c2d12; }
+        .mood-night #todo-list li { color: #e5e7eb; }
+        .quote-section {
+            text-align: center;
+        }
+        #quote-text {
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.8em;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .mood-rainy #quote-text, .mood-spring #quote-text { color: #1f2937; }
+        .mood-sunny #quote-text { color: #7c2d12; }
+        .mood-night #quote-text { color: #e5e7eb; }
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .mood-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .mood-btn {
+            padding: 10px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy .mood-btn { background: #9ca3af; }
+        .mood-rainy .mood-btn.active { background: #60a5fa; }
+        .mood-sunny .mood-btn { background: #f59e0b; }
+        .mood-sunny .mood-btn.active { background: #facc15; }
+        .mood-night .mood-btn { background: #2563eb; }
+        .mood-night .mood-btn.active { background: #60a5fa; }
+        .mood-spring .mood-btn { background: #f9a8d4; }
+        .mood-spring .mood-btn.active { background: #fbcfe8; }
+        #toggle-sound {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy #toggle-sound { background: #60a5fa; }
+        .mood-sunny #toggle-sound { background: #facc15; }
+        .mood-night #toggle-sound { background: #60a5fa; }
+        .mood-spring #toggle-sound { background: #fbcfe8; }
+        .mood-tracker-section select {
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: 'Lora', serif;
+            margin-bottom: 10px;
+        }
+        .mood-rainy .mood-tracker-section select, .mood-spring .mood-tracker-section select { color: #1f2937; }
+        .mood-sunny .mood-tracker-section select { color: #7c2d12; }
+        .mood-night .mood-tracker-section select { color: #e5e7eb; }
+        .mood-tracker-section button {
+            padding: 10px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy .mood-tracker-section button { background: #60a5fa; }
+        .mood-sunny .mood-tracker-section button { background: #facc15; }
+        .mood-night .mood-tracker-section button { background: #60a5fa; }
+        .mood-spring .mood-tracker-section button { background: #fbcfe8; }
+        .badge-section {
+            text-align: center;
+        }
+        .badge-motivation {
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        .mood-rainy .badge-motivation, .mood-spring .badge-motivation { color: #1f2937; }
+        .mood-sunny .badge-motivation { color: #7c2d12; }
+        .mood-night .badge-motivation { color: #e5e7eb; }
+        .badge-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        .badge {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .badge:hover {
+            transform: scale(1.1);
+        }
+        .mood-rainy .badge { background: #a5b4fc; color: #1f2937; }
+        .mood-sunny .badge { background: #f9a8d4; color: #7c2d12; }
+        .mood-night .badge { background: #60a5fa; color: #e5e7eb; }
+        .mood-spring .badge { background: #fbcfe8; color: #1f2937; }
+        .badge::after {
+            content: attr(data-date);
+            position: absolute;
+            bottom: -25px;
+            font-family: 'Great Vibes', cursive;
+            font-size: 0.9em;
+            color: inherit;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .badge:hover::after {
+            opacity: 1;
+        }
+        .badge-placeholder {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+            cursor: default;
+        }
+        .badge-placeholder:hover {
+            transform: none;
+        }
+        .gratitude-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .gratitude-input textarea {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            flex: 2;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-family: 'Lora', serif;
+            resize: vertical;
+        }
+        .mood-rainy .gratitude-input textarea, .mood-spring .gratitude-input textarea { color: #1f2937; }
+        .mood-sunny .gratitude-input textarea { color: #7c2d12; }
+        .mood-night .gratitude-input textarea { color: #e5e7eb; }
+        .gratitude-input button {
+            padding: 10px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy .gratitude-input button { background: #60a5fa; }
+        .mood-sunny .gratitude-input button { background: #facc15; }
+        .mood-night .gratitude-input button { background: #60a5fa; }
+        .mood-spring .gratitude-input button { background: #fbcfe8; }
+        #gratitude-list, #weekly-gratitude {
+            list-style: none;
+            padding: 0;
+        }
+        #gratitude-list li, #weekly-gratitude li {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .mood-rainy #gratitude-list li, .mood-spring #gratitude-list li, .mood-rainy #weekly-gratitude li, .mood-spring #weekly-gratitude li { color: #1f2937; }
+        .mood-sunny #gratitude-list li, .mood-sunny #weekly-gratitude li { color: #7c2d12; }
+        .mood-night #gratitude-list li, .mood-night #weekly-gratitude li { color: #e5e7eb; }
+        #focus-mode-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-family: 'Lora', serif;
+        }
+        .mood-rainy #focus-mode-btn { background: #ef4444; }
+        .mood-sunny #focus-mode-btn { background: #ef4444; }
+        .mood-night #focus-mode-btn { background: #ef4444; }
+        .mood-spring #focus-mode-btn { background: #ef4444; }
+        .focus-mode .quote-section,
+        .focus-mode .mood-section,
+        .focus-mode .mood-tracker-section,
+        .focus-mode .badge-section,
+        .focus-mode .gratitude-section {
+            display: none;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 300;
+        }
+        .mood-rainy footer, .mood-spring footer { color: #1f2937; }
+        .mood-sunny footer { color: #7c2d12; }
+        .mood-night footer { color: #e5e7eb; }
+        @media (min-width: 768px) {
+            main { grid-template-columns: 1fr 1fr; }
+        }
+        @media (min-width: 1024px) {
+            main { grid-template-columns: 1fr 1fr 1fr; }
+        }
+    </style>
+</head>
+<body class="mood-rainy">
+    <canvas id="bg-canvas"></canvas>
+    <header>
+        <h1>FajrFlow</h1>
+        <p class="tagline">Flow with Faith, Grow with Knowledge</p>
+    </header>
+    <main>
+        <section class="timer-section">
+            <h2>Timer</h2>
+            <div class="timer-modes">
+                <button class="mode-btn active" data-mode="pomodoro">Pomodoro</button>
+                <button class="mode-btn" data-mode="deepwork">Deep Work</button>
+                <button class="mode-btn" data-mode="custom">Custom</button>
+            </div>
+            <div class="custom-input hidden">
+                <input type="number" id="custom-work" placeholder="Work (min)" min="1">
+                <input type="number" id="custom-break" placeholder="Break (min)" min="1">
+            </div>
+            <div class="timer-display">25:00</div>
+            <div class="progress-bar"><div class="progress"></div></div>
+            <div class="timer-controls">
+                <button id="start-btn">Start</button>
+                <button id="pause-btn">Pause</button>
+                <button id="reset-btn">Reset</button>
+            </div>
+            <div class="session-tracker">Sesi Selesai Hari Ini: <span id="session-count">0</span></div>
+            <div id="prayer-suggestion" class="prayer-suggestion"></div>
+        </section>
+        <section class="todo-section">
+            <h2>To-Do List</h2>
+            <div class="todo-input">
+                <input type="text" id="todo-text" placeholder="Tambah tugas...">
+                <select id="todo-subject">
+                    <option value="">Pilih Mata Kuliah</option>
+                    <option value="Algoritma dan Struktur Data">Algoritma dan Struktur Data</option>
+                    <option value="Islam dan Ilmu Pengetahuan">Islam dan Ilmu Pengetahuan</option>
+                    <option value="Sistem Informasi Manajemen">Sistem Informasi Manajemen</option>
+                    <option value="Bahasa Inggris">Bahasa Inggris</option>
+                    <option value="Pemrograman Lanjut">Pemrograman Lanjut</option>
+                    <option value="Matematika Diskrit">Matematika Diskrit</option>
+                    <option value="Infrastruktur TIK">Infrastruktur TIK</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+                <input type="date" id="todo-deadline" min="2025-06-14">
+                <button id="add-todo">Tambah</button>
+            </div>
+            <div class="todo-filter">
+                <select id="filter-subject">
+                    <option value="all">Semua</option>
+                    <option value="Algoritma dan Struktur Data">Algoritma dan Struktur Data</option>
+                    <option value="Islam dan Ilmu Pengetahuan">Islam dan Ilmu Pengetahuan</option>
+                    <option value="Sistem Informasi Manajemen">Sistem Informasi Manajemen</option>
+                    <option value="Bahasa Inggris">Bahasa Inggris</option>
+                    <option value="Pemrograman Lanjut">Pemrograman Lanjut</option>
+                    <option value="Matematika Diskrit">Matematika Diskrit</option>
+                    <option value="Infrastruktur TIK">Infrastruktur TIK</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+            <ul id="todo-list"></ul>
+            <p>Tugas Selesai: <span id="todo-completed">0</span>/<span id="todo-total">0</span></p>
+        </section>
+
+        <section class="quote-section">
+            <h2>Quote Hari Ini</h2>
+            <p id="quote-text">Loading quote...</p>
+        </section>
+        <section class="mood-section">
+            <h2>Mood Preset</h2>
+            <div class="mood-options">
+                <button class="mood-btn active" data-mood="rainy">☔ Rainy</button>
+                <button class="mood-btn" data-mood="sunny">☀️ Sunny</button>
+                <button class="mood-btn" data-mood="night">🌙 Night</button>
+                <button class="mood-btn" data-mood="spring">🌸 Spring</button>
+            </div>
+            <button id="toggle-sound">Play Sound</button>
+        </section>
+        <section class="mood-tracker-section">
+            <h2>Daily Mood Tracker</h2>
+            <select id="mood-select">
+                <option value="😊">Happy 😊</option>
+                <option value="😊👍">Super Happy 😊👍</option>
+                <option value="😔">Sad 😔</option>
+                <option value="😴">Tired 😴</option>
+            </select>
+            <button id="add-mood">Save Mood</button>
+            <p>Today's Mood: <span id="today-mood">Not set yet</span></p>
+        </section>
+        <section class="badge-section">
+            <h2>Progress Badges</h2>
+            <p class="badge-motivation">Keep studying to unlock more badges! 🌟</p>
+            <div id="badge-grid" class="badge-grid">
+                <div class="badge badge-placeholder" data-date="Soon">🔒</div>
+                <div class="badge badge-placeholder" data-date="Soon">🔒</div>
+                <div class="badge badge-placeholder" data-date="Soon">🔒</div>
+            </div>
+        </section>
+        <section class="gratitude-section">
+            <h2>Gratitude Journal</h2>
+            <div class="gratitude-input">
+                <textarea id="gratitude-text" placeholder="What are you grateful for today?"></textarea>
+                <button id="add-gratitude">Add</button>
+            </div>
+            <ul id="gratitude-list"></ul>
+            <button id="view-weekly-gratitude">View Weekly Gratitude</button>
+            <ul id="weekly-gratitude" class="hidden"></ul>
+        </section>
+        <button id="focus-mode-btn">Focus Mode</button>
+    </main>
+    <footer>
+        <p>FajrFlow © 2025 | by NaswaIp</p>
+    </footer>
+
+    <audio id="audio-rainy" loop preload="auto" src="rain-sound-188158.mp3"></audio>
+    <audio id="audio-sunny" loop preload="auto" src="Fourtwnty - Mangu ft. Charita Utami ( Official Audio ).mp3"></audio>
+    <audio id="audio-night" loop preload="auto" src="Lana Del Rey - Chemtrails Over The Country Club (Official Music Video).mp3"></audio>
+
+
+    <script src="main.js"></script>
+    <script src="quotes.js"></script>
+    <script src="mood.js"></script>
+</body>
+</html>
