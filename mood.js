@@ -186,6 +186,7 @@ let isSoundPlaying = false;
 const audioRainy = document.getElementById('audio-rainy');
 const audioSunny = document.getElementById('audio-sunny');
 const audioNight = document.getElementById('audio-night');
+const audioSpring = document.getElementById('audio-spring');
 
 function stopAllAudio() {
     [audioRainy, audioSunny, audioNight].forEach(audio => {
@@ -203,6 +204,8 @@ function playCurrentMoodAudio() {
         audioSunny.play();
     } else if (currentMood === 'night') {
         audioNight.play();
+    } else if (currentMood === 'spring') {
+        audioSpring.play();
     }
 }
 
